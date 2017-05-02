@@ -79,7 +79,8 @@ PointReader *PotreeConverter::createPointReader(string path, PointAttributes poi
 	return reader;
 }
 
-PotreeConverter::PotreeConverter(string workDir, vector<string> sources){
+PotreeConverter::PotreeConverter(string executablePath, string workDir, vector<string> sources){
+    this->executablePath = executablePath;
 	this->workDir = workDir;
 	this->sources = sources;
 }
@@ -152,15 +153,13 @@ AABB PotreeConverter::calculateAABB(){
 
 void PotreeConverter::generatePage(string name){
 
-	string exePath = Potree::getExecutablePath();
-
 	string pagedir = this->workDir;
-	string templateSourcePath = exePath + "/resources/page_template/viewer_template.html";
-	string mapTemplateSourcePath = exePath + "/resources/page_template/lasmap_template.html";
+    string templateSourcePath = this->executablePath + "/resources/page_template/viewer_template.html";
+    string mapTemplateSourcePath = this->executablePath + "/resources/page_template/lasmap_template.html";
 	string templateTargetPath = pagedir + "/" + name + ".html";
 	string mapTemplateTargetPath = pagedir + "/lasmap_" + name + ".html";
 
-	Potree::copyDir(fs::path(exePath + "/resources/page_template"), fs::path(pagedir));
+    Potree::copyDir(fs::path(this->executablePath + "/resources/page_template"), fs::path(pagedir));
 	fs::remove(pagedir + "/viewer_template.html");
 	fs::remove(pagedir + "/lasmap_template.html");
 
@@ -171,19 +170,22 @@ void PotreeConverter::generatePage(string name){
 		string line;
 		while(getline(in, line)){
 			if(line.find("<!-- INCLUDE POINTCLOUD -->") != string::npos){
-				out << "\t\tviewer.addPointCloud(\"" << "pointclouds/" << name << "/cloud.js\");" << endl;
-			}else if((outputFormat == Potree::OutputFormat::LAS || outputFormat == Potree::OutputFormat::LAZ) && 
-				line.find("<!-- INCLUDE ADDITIONAL DEPENDENCIES HERE -->") != string::npos){
-				
-				out << "\t<script src=\"libs/plasio/js/laslaz.js\"></script>" << endl;
-				out << "\t<script src=\"libs/plasio/vendor/bluebird.js\"></script>" << endl;
-				out << "\t<script src=\"libs/potree/laslaz.js\"></script>" << endl;
+				//out << "\t\tviewer.addPointCloud(\"" << "pointclouds/" << name << "/cloud.js\");" << endl;
+				out << "\t\tPotree.loadPointCloud(\"pointclouds/" << name << "/cloud.js\", \"" << name << "\", e => {" << endl;
+				out << "\t\t\tviewer.scene.addPointCloud(e.pointcloud);" << endl;
+				out << "\t\t\tviewer.fitToScreen();" << endl;
+				out << "\t\t});" << endl;
 			}else if(line.find("<!-- INCLUDE SETTINGS HERE -->") != string::npos){
 				out << std::boolalpha;
 				out << "\t\t" << "document.title = \"" << title << "\";\n";
 				out << "\t\t" << "viewer.setEDLEnabled(" << edlEnabled << ");\n";
-				out << "\t\t" << "viewer.setShowSkybox(" << showSkybox << ");\n";
-				out << "\t\t" << "viewer.setMaterialID(Potree.PointColorType." << material << ");\n";
+				if(showSkybox){
+					out << "\t\t" << "viewer.setBackground(\"skybox\"); // [\"skybox\", \"gradient\", \"black\", \"white\"];\n";
+				}else{
+					out << "\t\t" << "viewer.setBackground(\"gradient\"); // [\"skybox\", \"gradient\", \"black\", \"white\"];\n";
+				}
+				//out << "\t\t" << "viewer.setShowSkybox(" << showSkybox << ");\n";
+				out << "\t\t" << "viewer.setMaterialID(Potree.PointColorType." << material << "); // any Potree.PointColorType.XXXX \n";
 				out << "\t\t" << "viewer.setDescription('" << boost::replace_all_copy(description, "'", "\"") << "');\n";
 			}else{
 				out << line << endl;
