@@ -126,6 +126,9 @@ void PotreeConverter::prepare(){
 
 AABB PotreeConverter::calculateAABB(){
 	AABB aabb;
+
+	std::cout << "aabbValues.size: " << aabbValues.size() << std::endl;
+	
 	if(this->aabbValues.size() == 6){
 		std::cout << "PotreeConverter::calculateAABB: Using AABB from args" << endl;
 		Vector3<double> userMin(this->aabbValues[0],this->aabbValues[1],this->aabbValues[2]);
