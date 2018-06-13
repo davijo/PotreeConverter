@@ -126,10 +126,10 @@ void PotreeConverter::prepare(){
 
 AABB PotreeConverter::calculateAABB(){
 	AABB aabb;
-	if(aabbValues.size() == 6){
+	if(this->aabbValues.size() == 6){
 		std::cout << "PotreeConverter::calculateAABB: Using AABB from args" << endl;
-		Vector3<double> userMin(aabbValues[0],aabbValues[1],aabbValues[2]);
-		Vector3<double> userMax(aabbValues[3],aabbValues[4],aabbValues[5]);
+		Vector3<double> userMin(this->aabbValues[0],this->aabbValues[1],this->aabbValues[2]);
+		Vector3<double> userMax(this->aabbValues[3],this->aabbValues[4],this->aabbValues[5]);
 		aabb = AABB(userMin, userMax);
 	}else{
 		std::cout << "PotreeConverter::calculateAABB: Using AABB from files" << endl;
